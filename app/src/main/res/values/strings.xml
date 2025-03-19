@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Stride</string>
+    <string name="tagline">Your personal fitness journey starts here</string>
+    <string name="features_title">What Stride offers</string>
+    <string name="feature_tracking">Accurate activity tracking</string>
+    <string name="feature_analytics">Personalized fitness analytics</string>
+    <string name="feature_coaching">AI-powered coaching</string>
+    <string name="app_description">Track your workouts, analyze your progress, and receive personalized coaching to help you achieve your fitness goals faster and more efficiently.</string>
+    <string name="get_started">Get Started</string>
+    <string name="login_prompt">Already have an account? Log in</string>
 </resources>
