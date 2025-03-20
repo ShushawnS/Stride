@@ -403,7 +403,7 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    // clean up for good practice - weather + map
+    // clean up for good practice - weather, maps  
     override fun onDestroy() {
         super.onDestroy()
         fusedLocationClient.removeLocationUpdates(locationCallback)
