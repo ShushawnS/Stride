@@ -5,50 +5,53 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color"
-    tools:context="es.uc3m.android.stride.LandingActivity">
+    tools:context="es.uc3m.android.stride.ui.LoginActivity">
 
-    <!-- App Name -->
+    <!-- Title -->
     <TextView
-        android:id="@+id/tv_app_name"
+        android:id="@+id/tvLoginTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="80dp"
         android:fontFamily="@font/montserrat_bold"
-        android:text="@string/app_name"
+        android:text="@string/login_title"
         android:textColor="@color/primary_text_color"
-        android:textSize="42sp"
+        android:textSize="32sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Tagline -->
+    <!-- Subtitle -->
     <TextView
-        android:id="@+id/tv_tagline"
-        android:layout_width="wrap_content"
+        android:id="@+id/tvLoginSubtitle"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
         android:fontFamily="@font/montserrat_medium"
-        android:text="@string/tagline"
+        android:gravity="center"
+        android:text="@string/login_subtitle"
         android:textColor="@color/secondary_text_color"
-        android:textSize="18sp"
+        android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_app_name" />
+        app:layout_constraintTop_toBottomOf="@id/tvLoginTitle" />
 
-    <!-- Features Section -->
+    <!-- Login Form Card -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/cv_features"
+        android:id="@+id/cvLoginForm"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="40dp"
         android:layout_marginEnd="24dp"
         app:cardBackgroundColor="@color/card_background"
         app:cardCornerRadius="16dp"
         app:cardElevation="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_tagline">
+        app:layout_constraintTop_toBottomOf="@id/tvLoginSubtitle">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -56,64 +59,72 @@
             android:orientation="vertical"
             android:padding="24dp">
 
+            <!-- Email Field -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilEmail"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_email">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/montserrat_regular"
+                    android:inputType="textEmailAddress" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Password Field -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPassword"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="@string/hint_password"
+                app:passwordToggleEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/montserrat_regular"
+                    android:inputType="textPassword" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Forgot Password Link -->
             <TextView
+                android:id="@+id/tvForgotPassword"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/montserrat_semibold"
-                android:text="@string/features_title"
-                android:textColor="@color/primary_text_color"
-                android:textSize="24sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:fontFamily="@font/montserrat_medium"
-                android:text="@string/feature_tracking"
-                android:textColor="@color/primary_text_color"
-                android:textSize="18sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_gravity="end"
                 android:layout_marginTop="16dp"
                 android:fontFamily="@font/montserrat_medium"
-                android:text="@string/feature_analytics"
-                android:textColor="@color/primary_text_color"
-                android:textSize="18sp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:fontFamily="@font/montserrat_medium"
-                android:text="@string/feature_coaching"
-                android:textColor="@color/primary_text_color"
-                android:textSize="18sp" />
+                android:text="@string/forgot_password"
+                android:textColor="@color/accent_color"
+                android:textSize="14sp" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- App Description -->
-    <TextView
-        android:id="@+id/tv_description"
-        android:layout_width="0dp"
+    <!-- Remember Me Checkbox -->
+    <CheckBox
+        android:id="@+id/cbRememberMe"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
-        android:layout_marginTop="32dp"
-        android:layout_marginEnd="32dp"
+        android:layout_marginTop="16dp"
         android:fontFamily="@font/montserrat_regular"
-        android:gravity="center"
-        android:text="@string/app_description"
+        android:text="@string/remember_me"
         android:textColor="@color/secondary_text_color"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cv_features" />
+        app:layout_constraintTop_toBottomOf="@id/cvLoginForm" />
 
-    <!-- Get Started Button -->
+    <!-- Login Button -->
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnGetStarted"
-        android:layout_width="wrap_content"
+        android:id="@+id/btnLogin"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
@@ -121,22 +132,22 @@
         android:backgroundTint="@color/accent_color"
         android:fontFamily="@font/montserrat_bold"
         android:padding="16dp"
-        android:text="@string/get_started"
+        android:text="@string/btn_login"
         android:textColor="@color/white"
         android:textSize="18sp"
         app:cornerRadius="12dp"
-        app:layout_constraintBottom_toTopOf="@id/tvLoginPrompt"
+        app:layout_constraintBottom_toTopOf="@id/tvRegisterLink"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Login Prompt -->
+    <!-- Register Link -->
     <TextView
-        android:id="@+id/tvLoginPrompt"
+        android:id="@+id/tvRegisterLink"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
         android:fontFamily="@font/montserrat_medium"
-        android:text="@string/login_prompt"
+        android:text="@string/register_link"
         android:textColor="@color/secondary_text_color"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"

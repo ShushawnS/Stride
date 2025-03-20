@@ -6,9 +6,6 @@ import androidx.appcompat.app.AppCompatActivity
 
 import es.uc3m.android.stride.databinding.ActivityLandingBinding
 
-import es.uc3m.android.stride.ui.RegistrationActivity
-import es.uc3m.android.stride.ui.LoginActivity
-
 class LandingActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLandingBinding
 
@@ -17,13 +14,13 @@ class LandingActivity : AppCompatActivity() {
         binding = ActivityLandingBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Set up button click listeners
+        // Registration screen logic
         binding.btnGetStarted.setOnClickListener {
-            // Navigate to registration screen
             val intent = Intent(this, RegistrationActivity::class.java)
             startActivity(intent)
         }
 
+        // Login activity
         binding.tvLoginPrompt.setOnClickListener {
             // Navigate to login screen
             val intent = Intent(this, LoginActivity::class.java)
