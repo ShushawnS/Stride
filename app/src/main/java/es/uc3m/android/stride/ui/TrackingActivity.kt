@@ -21,6 +21,12 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
 import es.uc3m.android.stride.R
 import es.uc3m.android.stride.databinding.ActivityTrackingBinding
+import kotlinx.coroutines.*
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
@@ -43,10 +49,19 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var timerRunnable: Runnable
 
+    // Weather properties
+    private val weatherScope = CoroutineScope(Dispatchers.Main + Job())
+    private var lastWeatherUpdate = 0L
+    private var currentTemperature = ""
+    private var currentWeatherCondition = ""
+    private var currentHumidity = ""
+    private var currentWindSpeed = ""
+
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
         private const val UPDATE_INTERVAL = 5000L // 5 seconds
         private const val FASTEST_UPDATE_INTERVAL = 2000L // 2 seconds
+        private const val WEATHER_UPDATE_INTERVAL = 10 * 60 * 1000L // 10 minutes
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,21 +69,21 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
         binding = ActivityTrackingBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Set up toolbar
+        // tool bar
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // Set up the map
+        // map
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        // Initialize location services
+        // location services
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         createLocationRequest()
         createLocationCallback()
 
-        // Set up timer runnable
+        // timer runnable
         timerRunnable = object : Runnable {
             override fun run() {
                 timeElapsed = SystemClock.elapsedRealtime() - timeStarted
@@ -77,9 +92,13 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-        // Set up click listeners
+        // button and weather click listeners
         binding.btnStartTracking.setOnClickListener {
             toggleTracking()
+        }
+
+        binding.layoutWeatherInfo.setOnClickListener {
+            showDetailedWeatherInfo()
         }
     }
 
@@ -101,6 +120,13 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
                         updatePathOnMap()
                         updateDistanceUI(location)
                         moveCamera(latLng)
+
+                        // check to update weather condition
+                        val currentTime = System.currentTimeMillis()
+                        if (currentTime - lastWeatherUpdate > WEATHER_UPDATE_INTERVAL) {
+                            fetchWeatherData(location.latitude, location.longitude)
+                            lastWeatherUpdate = currentTime
+                        }
                     }
                 }
             }
@@ -125,6 +151,9 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
                 location?.let {
                     val latLng = LatLng(it.latitude, it.longitude)
                     moveCamera(latLng)
+
+                    // get weather data from location
+                    fetchWeatherData(it.latitude, it.longitude)
                 }
             }
         } else {
@@ -168,7 +197,7 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
         binding.btnStartTracking.text = getString(R.string.stop_tracking)
         binding.btnStartTracking.setBackgroundColor(ContextCompat.getColor(this, R.color.stop_color))
 
-        // Start location updates
+        // location updates
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -181,7 +210,7 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         }
 
-        // Start timer
+        // timer
         timeStarted = SystemClock.elapsedRealtime() - timeElapsed
         handler.post(timerRunnable)
     }
@@ -191,10 +220,10 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
         binding.btnStartTracking.text = getString(R.string.start_tracking)
         binding.btnStartTracking.setBackgroundColor(ContextCompat.getColor(this, R.color.accent_color))
 
-        // Stop location updates
+        // stop location after stop tracking
         fusedLocationClient.removeLocationUpdates(locationCallback)
 
-        // Stop timer
+        // stop timer too
         handler.removeCallbacks(timerRunnable)
 
         // TODO: Save workout data
@@ -217,11 +246,11 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
             val segmentDistance = it.distanceTo(location)
             distanceTraveled += segmentDistance
 
-            // Update distance display
+            // distance update
             val distanceInKm = distanceTraveled / 1000f
             binding.tvDistance.text = String.format("%.2f km", distanceInKm)
 
-            // Update pace
+            // pace for tracking update
             if (timeElapsed > 0) {
                 val paceInMinutesPerKm = (timeElapsed / 60000f) / distanceInKm
                 val paceMinutes = paceInMinutesPerKm.toInt()
@@ -229,7 +258,7 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
                 binding.tvCurrentPace.text = String.format("%d:%02d /km", paceMinutes, paceSeconds)
             }
 
-            // Update calories (very rough estimate)
+            // calories (rough estimate) - for secondary functionality
             val caloriesBurned = (distanceTraveled / 1000f * 65).roundToInt() // ~65 calories per km
             binding.tvCalories.text = "$caloriesBurned kcal"
         }
@@ -256,18 +285,110 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
         ).show()
     }
 
+    // added weather
+    private fun fetchWeatherData(latitude: Double, longitude: Double) {
+        weatherScope.launch {
+            try {
+                val weatherData = withContext(Dispatchers.IO) {
+                    fetchWeatherFromApi(latitude, longitude)
+                }
+                updateWeatherUI(weatherData)
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    binding.tvTemperature.text = "--°C"
+                    binding.tvWeatherCondition.text = "Weather unavailable"
+                    Toast.makeText(
+                        this@TrackingActivity,
+                        "Failed to fetch weather data: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun fetchWeatherFromApi(latitude: Double, longitude: Double): JSONObject {
+        val apiKey = applicationContext.packageManager
+            .getApplicationInfo(applicationContext.packageName, PackageManager.GET_META_DATA)
+            .metaData.getString("weather_api_key") ?: ""
+
+        val url = URL("https://api.openweathermap.org/data/2.5/weather?lat=$latitude&lon=$longitude&units=metric&appid=$apiKey")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+
+        val reader = BufferedReader(InputStreamReader(connection.inputStream))
+        val response = StringBuilder()
+        var line: String?
+
+        while (reader.readLine().also { line = it } != null) {
+            response.append(line)
+        }
+
+        reader.close()
+        connection.disconnect()
+
+        return JSONObject(response.toString())
+    }
+
+    private fun updateWeatherUI(weatherData: JSONObject) {
+        try {
+            val main = weatherData.getJSONObject("main")
+            val weather = weatherData.getJSONArray("weather").getJSONObject(0)
+            val wind = weatherData.getJSONObject("wind")
+
+            currentTemperature = "${main.getDouble("temp").roundToInt()}°C"
+            currentWeatherCondition = weather.getString("main")
+            currentHumidity = "${main.getInt("humidity")}%"
+            currentWindSpeed = "${wind.getDouble("speed").roundToInt()} m/s"
+
+            binding.tvTemperature.text = currentTemperature
+            binding.tvWeatherCondition.text = currentWeatherCondition
+
+            // EXTERNAL SERVICES, primary functionality weather icon
+            when (currentWeatherCondition.toLowerCase(Locale.ROOT)) {
+                "clear" -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_sunny)
+                "clouds" -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_cloudy)
+                "rain" -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_rainy)
+                "snow" -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_snowy)
+                "thunderstorm" -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_thunder)
+                else -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_cloudy)
+            }
+
+        } catch (e: Exception) {
+            binding.tvTemperature.text = "--°C"
+            binding.tvWeatherCondition.text = "Weather error"
+        }
+    }
+
+    private fun showDetailedWeatherInfo() {
+        if (currentTemperature.isNotEmpty() && currentWeatherCondition.isNotEmpty()) {
+            Toast.makeText(
+                this,
+                "Current weather: $currentWeatherCondition, Temperature: $currentTemperature, " +
+                        "Humidity: $currentHumidity, Wind: $currentWindSpeed",
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            Toast.makeText(
+                this,
+                "Weather data not available yet",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    // to stop location on pause
     override fun onPause() {
         super.onPause()
         if (isTracking) {
-            // Stop location updates but keep the timer running
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
     }
 
+    // resume
     override fun onResume() {
         super.onResume()
         if (isTracking) {
-            // Resume location updates
             if (ContextCompat.checkSelfPermission(
                     this,
                     Manifest.permission.ACCESS_FINE_LOCATION
@@ -282,10 +403,11 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    // clean up for good practice - weather + map
     override fun onDestroy() {
         super.onDestroy()
-        // Clean up resources
         fusedLocationClient.removeLocationUpdates(locationCallback)
         handler.removeCallbacks(timerRunnable)
+        weatherScope.cancel()
     }
 }

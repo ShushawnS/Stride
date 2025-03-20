@@ -19,6 +19,11 @@
         android:theme="@style/Theme.Stride"
         tools:targetApi="31">
 
+        <!-- Weather -->
+        <meta-data
+            android:name="weather_api_key"
+            android:value="805d869ddfc58f73f6c6c20a73d249ce" />
+
         <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"

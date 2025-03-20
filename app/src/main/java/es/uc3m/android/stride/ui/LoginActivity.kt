@@ -19,23 +19,22 @@ class LoginActivity : AppCompatActivity() {
         setupClickListeners()
     }
 
+    // registration activity
     private fun setupClickListeners() {
-        // Register link click listener
         binding.tvRegisterLink.setOnClickListener {
-            // Navigate to registration screen
             val intent = Intent(this, RegistrationActivity::class.java)
             startActivity(intent)
-            finish() // Close login activity
+            finish()
         }
 
-        // Login button click listener
+        // login button
         binding.btnLogin.setOnClickListener {
             if (validateForm()) {
                 loginUser()
             }
         }
 
-        // Forgot password click listener
+        // forgot password
         binding.tvForgotPassword.setOnClickListener {
             // TODO: Implement forgot password functionality
             Toast.makeText(
@@ -46,10 +45,11 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+
+    // email and password validation
     private fun validateForm(): Boolean {
         var isValid = true
 
-        // Validate email
         val email = binding.etEmail.text.toString().trim()
         if (email.isEmpty()) {
             binding.tilEmail.error = getString(R.string.error_email_required)
@@ -61,7 +61,6 @@ class LoginActivity : AppCompatActivity() {
             binding.tilEmail.error = null
         }
 
-        // Validate password
         val password = binding.etPassword.text.toString()
         if (password.isEmpty()) {
             binding.tilPassword.error = getString(R.string.error_password_required)
@@ -73,8 +72,8 @@ class LoginActivity : AppCompatActivity() {
         return isValid
     }
 
+    // hardcoded login credentials yee
     private fun loginUser() {
-        // Hardcoded login bypass
         val hardcodedEmail = "user@example.com"
         val hardcodedPassword = "password"
 
@@ -90,7 +89,7 @@ class LoginActivity : AppCompatActivity() {
             Toast.makeText(this, "Invalid credentials!", Toast.LENGTH_SHORT).show()
         }
 
-        // Remember me functionality
+        // remember me button - doesn't work yet lol
         if (binding.cbRememberMe.isChecked) {
             // TODO: Store credentials securely or set a flag in SharedPreferences
         }

@@ -14,15 +14,14 @@ class LandingActivity : AppCompatActivity() {
         binding = ActivityLandingBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Registration screen logic
+        // registration screen logic
         binding.btnGetStarted.setOnClickListener {
             val intent = Intent(this, RegistrationActivity::class.java)
             startActivity(intent)
         }
 
-        // Login activity
+        // login activity
         binding.tvLoginPrompt.setOnClickListener {
-            // Navigate to login screen
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
         }

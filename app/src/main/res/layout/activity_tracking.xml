@@ -20,6 +20,55 @@
         app:title="@string/tracking_title"
         app:titleTextColor="@color/white" />
 
+    <!-- Weather Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/layoutWeatherInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/card_background"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <ImageView
+                android:id="@+id/ivWeatherIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/weather_cloudy"
+                android:contentDescription="Weather icon" />
+
+            <TextView
+                android:id="@+id/tvTemperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="--°C"
+                android:textColor="@color/primary_text_color"
+                android:fontFamily="@font/montserrat_bold"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvWeatherCondition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="--"
+                android:textColor="@color/secondary_text_color"
+                android:fontFamily="@font/montserrat_medium"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
     <!-- Map Container -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cvMapContainer"
@@ -31,7 +80,7 @@
         app:layout_constraintBottom_toTopOf="@id/cvStatsContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar">
+        app:layout_constraintTop_toBottomOf="@id/layoutWeatherInfo">
 
         <fragment
             android:id="@+id/map"

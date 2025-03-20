@@ -19,15 +19,13 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        // Login link click listener
         binding.tvLoginLink.setOnClickListener {
-            // Navigate to login screen
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
-            finish() // Close registration activity
+            finish()
         }
 
-        // Register button click listener
+        // register button
         binding.btnRegister.setOnClickListener {
             if (validateForm()) {
                 registerUser()
@@ -35,10 +33,10 @@ class RegistrationActivity : AppCompatActivity() {
         }
     }
 
+    // name
     private fun validateForm(): Boolean {
         var isValid = true
 
-        // Validate name
         val name = binding.etName.text.toString().trim()
         if (name.isEmpty()) {
             binding.tilName.error = getString(R.string.error_name_required)
@@ -47,7 +45,7 @@ class RegistrationActivity : AppCompatActivity() {
             binding.tilName.error = null
         }
 
-        // Validate email
+        // email
         val email = binding.etEmail.text.toString().trim()
         if (email.isEmpty()) {
             binding.tilEmail.error = getString(R.string.error_email_required)
@@ -59,7 +57,7 @@ class RegistrationActivity : AppCompatActivity() {
             binding.tilEmail.error = null
         }
 
-        // Validate password
+        // password
         val password = binding.etPassword.text.toString()
         if (password.isEmpty()) {
             binding.tilPassword.error = getString(R.string.error_password_required)
@@ -83,7 +81,7 @@ class RegistrationActivity : AppCompatActivity() {
             binding.tilConfirmPassword.error = null
         }
 
-        // Validate terms checkbox
+        // terms classic si
         if (!binding.cbTerms.isChecked) {
             Toast.makeText(
                 this,
@@ -97,8 +95,8 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     private fun registerUser() {
-        // Here you would implement the actual registration logic
-        // For now, we'll just show a success message and navigate to the next screen
+        // to show actual registration logic
+        // just show success message and next screen for now
 
         // Show loading state if needed
         // binding.btnRegister.isEnabled = false
@@ -106,7 +104,7 @@ class RegistrationActivity : AppCompatActivity() {
 
         // TODO: Add your registration API call or database operation here
 
-        // For demo purposes, we'll just show a success message and navigate
+        // demo purposes, we'll just show a success message and navigate
         Toast.makeText(
             this,
             getString(R.string.registration_success),
