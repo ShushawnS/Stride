@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import es.uc3m.android.stride.R
 import es.uc3m.android.stride.databinding.ActivityLoginBinding
+import es.uc3m.android.stride.ui.TrackingActivity
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -73,30 +74,25 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun loginUser() {
-        // Here you would implement the actual login logic
-        // For now, we'll just show a success message and navigate to the next screen
+        // Hardcoded login bypass
+        val hardcodedEmail = "user@example.com"
+        val hardcodedPassword = "password"
 
-        // Show loading state if needed
-        // binding.btnLogin.isEnabled = false
-        // binding.progressBar.visibility = View.VISIBLE
+        val enteredEmail = binding.etEmail.text.toString().trim()
+        val enteredPassword = binding.etPassword.text.toString()
 
-        // TODO: Add your login API call or authentication logic here
-
-        // For demo purposes, we'll just show a success message and navigate
-        Toast.makeText(
-            this,
-            getString(R.string.login_success),
-            Toast.LENGTH_SHORT
-        ).show()
+        if (enteredEmail == hardcodedEmail && enteredPassword == hardcodedPassword) {
+            Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, TrackingActivity::class.java)
+            startActivity(intent)
+            finish()
+        } else {
+            Toast.makeText(this, "Invalid credentials!", Toast.LENGTH_SHORT).show()
+        }
 
         // Remember me functionality
         if (binding.cbRememberMe.isChecked) {
             // TODO: Store credentials securely or set a flag in SharedPreferences
         }
-
-        // Navigate to the main activity
-        // val intent = Intent(this, MainActivity::class.java)
-        // startActivity(intent)
-        // finish()
     }
 }

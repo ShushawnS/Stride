@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -12,6 +18,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Stride"
         tools:targetApi="31">
+
+        <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAz_PZLPtnLPvwOmsRrQJAJfBcbk2n-55s" />
+
         <activity
             android:name="es.uc3m.android.stride.ui.LandingActivity"
             android:exported="true"
@@ -21,11 +33,24 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name="es.uc3m.android.stride.ui.RegistrationActivity"
             android:exported="true"
             android:theme="@style/Theme.Stride">
         </activity>
-    </application>
 
+        <activity
+            android:name="es.uc3m.android.stride.ui.LoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Stride">
+        </activity>
+
+        <activity
+            android:name="es.uc3m.android.stride.ui.TrackingActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Stride">
+        </activity>
+
+    </application>
 </manifest>

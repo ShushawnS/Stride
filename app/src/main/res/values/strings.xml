@@ -4,8 +4,8 @@
     <string name="features_title">What Stride offers</string>
     <string name="feature_tracking">Accurate activity tracking</string>
     <string name="feature_analytics">Personalized fitness analytics</string>
-    <string name="feature_coaching">AI-powered coaching</string>
-    <string name="app_description">Track your workouts, analyze your progress, and receive personalized coaching to help you achieve your fitness goals faster and more efficiently.</string>
+    <string name="feature_coaching">Daily fitness reminders</string>
+    <string name="app_description">Track your workouts, analyze your progress to help you achieve your fitness goals faster and more efficiently.</string>
     <string name="get_started">Get Started</string>
     <string name="login_prompt">Already have an account? Log in</string>
 
@@ -40,4 +40,22 @@
     <string name="register_link">Don\'t have an account? Sign up</string>
     <string name="login_success">Login successful!</string>
     <string name="forgot_password_coming_soon">Password reset feature coming soon</string>
+
+    <!-- Tracking Screen -->
+    <string name="tracking_title">Track Workout</string>
+    <string name="time_elapsed">Time</string>
+    <string name="distance">Distance</string>
+    <string name="current_pace">Current Pace</string>
+    <string name="calories">Calories</string>
+    <string name="start_tracking">Start Tracking</string>
+    <string name="stop_tracking">Stop Workout</string>
+    <string name="workout_summary">Workout Summary</string>
+    <string name="total_distance">Total Distance</string>
+    <string name="total_time">Total Time</string>
+    <string name="average_pace">Average Pace</string>
+    <string name="total_calories">Total Calories</string>
+    <string name="save_workout">Save Workout</string>
+    <string name="discard_workout">Discard</string>
+    <color name="divider_color">#EEEEEE</color>
+    <color name="stop_color">#F44336</color>
 </resources>
