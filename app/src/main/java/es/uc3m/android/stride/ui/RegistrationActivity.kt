@@ -4,28 +4,29 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 import es.uc3m.android.stride.R
 import es.uc3m.android.stride.databinding.ActivityRegistrationBinding
 
 class RegistrationActivity : AppCompatActivity() {
     private lateinit var binding: ActivityRegistrationBinding
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegistrationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        auth = FirebaseAuth.getInstance()
         setupClickListeners()
     }
 
     private fun setupClickListeners() {
         binding.tvLoginLink.setOnClickListener {
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
 
-        // register button
         binding.btnRegister.setOnClickListener {
             if (validateForm()) {
                 registerUser()
@@ -33,11 +34,14 @@ class RegistrationActivity : AppCompatActivity() {
         }
     }
 
-    // name
     private fun validateForm(): Boolean {
         var isValid = true
 
         val name = binding.etName.text.toString().trim()
+        val email = binding.etEmail.text.toString().trim()
+        val password = binding.etPassword.text.toString()
+        val confirmPassword = binding.etConfirmPassword.text.toString()
+
         if (name.isEmpty()) {
             binding.tilName.error = getString(R.string.error_name_required)
             isValid = false
@@ -45,20 +49,13 @@ class RegistrationActivity : AppCompatActivity() {
             binding.tilName.error = null
         }
 
-        // email
-        val email = binding.etEmail.text.toString().trim()
         if (email.isEmpty()) {
             binding.tilEmail.error = getString(R.string.error_email_required)
-            isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.tilEmail.error = getString(R.string.error_invalid_email)
             isValid = false
         } else {
             binding.tilEmail.error = null
         }
 
-        // password
-        val password = binding.etPassword.text.toString()
         if (password.isEmpty()) {
             binding.tilPassword.error = getString(R.string.error_password_required)
             isValid = false
@@ -69,25 +66,15 @@ class RegistrationActivity : AppCompatActivity() {
             binding.tilPassword.error = null
         }
 
-        // Validate confirm password
-        val confirmPassword = binding.etConfirmPassword.text.toString()
-        if (confirmPassword.isEmpty()) {
-            binding.tilConfirmPassword.error = getString(R.string.error_confirm_password_required)
-            isValid = false
-        } else if (confirmPassword != password) {
+        if (confirmPassword.isEmpty() || confirmPassword != password) {
             binding.tilConfirmPassword.error = getString(R.string.error_passwords_dont_match)
             isValid = false
         } else {
             binding.tilConfirmPassword.error = null
         }
 
-        // terms classic si
         if (!binding.cbTerms.isChecked) {
-            Toast.makeText(
-                this,
-                getString(R.string.error_terms_required),
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(this, getString(R.string.error_terms_required), Toast.LENGTH_SHORT).show()
             isValid = false
         }
 
@@ -95,25 +82,18 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     private fun registerUser() {
-        // to show actual registration logic
-        // just show success message and next screen for now
+        val email = binding.etEmail.text.toString().trim()
+        val password = binding.etPassword.text.toString()
 
-        // Show loading state if needed
-        // binding.btnRegister.isEnabled = false
-        // binding.progressBar.visibility = View.VISIBLE
-
-        // TODO: Add your registration API call or database operation here
-
-        // demo purposes, we'll just show a success message and navigate
-        Toast.makeText(
-            this,
-            getString(R.string.registration_success),
-            Toast.LENGTH_SHORT
-        ).show()
-
-        // Navigate to the main activity or onboarding
-        // val intent = Intent(this, MainActivity::class.java)
-        // startActivity(intent)
-        // finish()
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
+                } else {
+                    Toast.makeText(this, "Registration failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
     }
 }
