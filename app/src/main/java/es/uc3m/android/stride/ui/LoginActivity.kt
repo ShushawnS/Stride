@@ -51,6 +51,41 @@
 
         private fun validateForm(): Boolean {
             var isValid = true
+        binding.tvForgotPassword.setOnClickListener {
+            val email = binding.etEmail.text.toString().trim()
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Enter your email to reset password.", Toast.LENGTH_SHORT).show()
+            } else {
+                auth.sendPasswordResetEmail(email).addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Toast.makeText(this, "Password reset email sent.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Error: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun validateForm(): Boolean {
+        var isValid = true
+
+        val email = binding.etEmail.text.toString().trim()
+        val password = binding.etPassword.text.toString()
+
+        if (email.isEmpty()) {
+            binding.tilEmail.error = getString(R.string.error_email_required)
+            isValid = false
+        } else {
+            binding.tilEmail.error = null
+        }
+
+        if (password.isEmpty()) {
+            binding.tilPassword.error = getString(R.string.error_password_required)
+            isValid = false
+        } else {
+            binding.tilPassword.error = null
+        }
 
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString()
