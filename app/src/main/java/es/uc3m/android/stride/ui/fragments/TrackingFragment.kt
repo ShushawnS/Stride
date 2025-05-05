@@ -1,17 +1,17 @@
-package es.uc3m.android.stride.ui
+package es.uc3m.android.stride.ui.fragments
 
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.os.SystemClock
+import android.os.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -20,20 +20,21 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
 import es.uc3m.android.stride.R
-import es.uc3m.android.stride.databinding.ActivityTrackingBinding
+import es.uc3m.android.stride.databinding.FragmentTrackingBinding
 import kotlinx.coroutines.*
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
 
-class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
+class TrackingFragment : Fragment(), OnMapReadyCallback {
 
-    private lateinit var binding: ActivityTrackingBinding
+    private var _binding: FragmentTrackingBinding? = null
+    private val binding get() = _binding!!
+
     private lateinit var mMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
@@ -49,7 +50,6 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var timerRunnable: Runnable
 
-    // Weather properties
     private val weatherScope = CoroutineScope(Dispatchers.Main + Job())
     private var lastWeatherUpdate = 0L
     private var currentTemperature = ""
@@ -59,31 +59,30 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
-        private const val UPDATE_INTERVAL = 5000L // 5 seconds
-        private const val FASTEST_UPDATE_INTERVAL = 2000L // 2 seconds
-        private const val WEATHER_UPDATE_INTERVAL = 10 * 60 * 1000L // 10 minutes
+        private const val UPDATE_INTERVAL = 5000L
+        private const val FASTEST_UPDATE_INTERVAL = 2000L
+        private const val WEATHER_UPDATE_INTERVAL = 10 * 60 * 1000L
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityTrackingBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentTrackingBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
-        // tool bar
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        // map
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
+        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        // location services
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         createLocationRequest()
         createLocationCallback()
 
-        // timer runnable
         timerRunnable = object : Runnable {
             override fun run() {
                 timeElapsed = SystemClock.elapsedRealtime() - timeStarted
@@ -92,7 +91,6 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-        // button and weather click listeners
         binding.btnStartTracking.setOnClickListener {
             toggleTracking()
         }
@@ -121,7 +119,6 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
                         updateDistanceUI(location)
                         moveCamera(latLng)
 
-                        // check to update weather condition
                         val currentTime = System.currentTimeMillis()
                         if (currentTime - lastWeatherUpdate > WEATHER_UPDATE_INTERVAL) {
                             fetchWeatherData(location.latitude, location.longitude)
@@ -142,7 +139,7 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun enableMyLocation() {
         if (ContextCompat.checkSelfPermission(
-                this,
+                requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
@@ -151,14 +148,11 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
                 location?.let {
                     val latLng = LatLng(it.latitude, it.longitude)
                     moveCamera(latLng)
-
-                    // get weather data from location
                     fetchWeatherData(it.latitude, it.longitude)
                 }
             }
         } else {
-            ActivityCompat.requestPermissions(
-                this,
+            requestPermissions(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 LOCATION_PERMISSION_REQUEST_CODE
             )
@@ -170,17 +164,16 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
         permissions: Array<String>,
         grantResults: IntArray
     ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                enableMyLocation()
-            } else {
-                Toast.makeText(
-                    this,
-                    "Location permission denied. Cannot track workout.",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE &&
+            grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            enableMyLocation()
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "Location permission denied. Cannot track workout.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -195,11 +188,10 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun startTracking() {
         isTracking = true
         binding.btnStartTracking.text = getString(R.string.stop_tracking)
-        binding.btnStartTracking.setBackgroundColor(ContextCompat.getColor(this, R.color.stop_color))
+        binding.btnStartTracking.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.stop_color))
 
-        // location updates
         if (ContextCompat.checkSelfPermission(
-                this,
+                requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
@@ -210,7 +202,6 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         }
 
-        // timer
         timeStarted = SystemClock.elapsedRealtime() - timeElapsed
         handler.post(timerRunnable)
     }
@@ -218,15 +209,11 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun stopTracking() {
         isTracking = false
         binding.btnStartTracking.text = getString(R.string.start_tracking)
-        binding.btnStartTracking.setBackgroundColor(ContextCompat.getColor(this, R.color.accent_color))
+        binding.btnStartTracking.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.accent_color))
 
-        // stop location after stop tracking
         fusedLocationClient.removeLocationUpdates(locationCallback)
-
-        // stop timer too
         handler.removeCallbacks(timerRunnable)
 
-        // TODO: Save workout data
         showWorkoutSummary()
     }
 
@@ -246,20 +233,17 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
             val segmentDistance = it.distanceTo(location)
             distanceTraveled += segmentDistance
 
-            // distance update
             val distanceInKm = distanceTraveled / 1000f
             binding.tvDistance.text = String.format("%.2f km", distanceInKm)
 
-            // pace for tracking update
-            if (timeElapsed > 0) {
+            if (timeElapsed > 0 && distanceInKm > 0) {
                 val paceInMinutesPerKm = (timeElapsed / 60000f) / distanceInKm
                 val paceMinutes = paceInMinutesPerKm.toInt()
                 val paceSeconds = ((paceInMinutesPerKm - paceMinutes) * 60).roundToInt()
                 binding.tvCurrentPace.text = String.format("%d:%02d /km", paceMinutes, paceSeconds)
             }
 
-            // calories (rough estimate) - for secondary functionality
-            val caloriesBurned = (distanceTraveled / 1000f * 65).roundToInt() // ~65 calories per km
+            val caloriesBurned = (distanceTraveled / 1000f * 65).roundToInt()
             binding.tvCalories.text = "$caloriesBurned kcal"
         }
         lastLocation = location
@@ -277,15 +261,13 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun showWorkoutSummary() {
-        // TODO: Implement workout summary dialog or navigate to summary screen
         Toast.makeText(
-            this,
+            requireContext(),
             "Workout completed! Distance: ${String.format("%.2f", distanceTraveled / 1000f)} km",
             Toast.LENGTH_LONG
         ).show()
     }
 
-    // added weather
     private fun fetchWeatherData(latitude: Double, longitude: Double) {
         weatherScope.launch {
             try {
@@ -298,7 +280,7 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
                     binding.tvTemperature.text = "--°C"
                     binding.tvWeatherCondition.text = "Weather unavailable"
                     Toast.makeText(
-                        this@TrackingActivity,
+                        requireContext(),
                         "Failed to fetch weather data: ${e.message}",
                         Toast.LENGTH_SHORT
                     ).show()
@@ -308,8 +290,8 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun fetchWeatherFromApi(latitude: Double, longitude: Double): JSONObject {
-        val apiKey = applicationContext.packageManager
-            .getApplicationInfo(applicationContext.packageName, PackageManager.GET_META_DATA)
+        val apiKey = requireContext().packageManager
+            .getApplicationInfo(requireContext().packageName, PackageManager.GET_META_DATA)
             .metaData.getString("weather_api_key") ?: ""
 
         val url = URL("https://api.openweathermap.org/data/2.5/weather?lat=$latitude&lon=$longitude&units=metric&appid=$apiKey")
@@ -344,8 +326,7 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
             binding.tvTemperature.text = currentTemperature
             binding.tvWeatherCondition.text = currentWeatherCondition
 
-            // EXTERNAL SERVICES, primary functionality weather icon
-            when (currentWeatherCondition.toLowerCase(Locale.ROOT)) {
+            when (currentWeatherCondition.lowercase(Locale.ROOT)) {
                 "clear" -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_sunny)
                 "clouds" -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_cloudy)
                 "rain" -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_rainy)
@@ -353,7 +334,6 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
                 "thunderstorm" -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_thunder)
                 else -> binding.ivWeatherIcon.setImageResource(R.drawable.weather_cloudy)
             }
-
         } catch (e: Exception) {
             binding.tvTemperature.text = "--°C"
             binding.tvWeatherCondition.text = "Weather error"
@@ -363,21 +343,16 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun showDetailedWeatherInfo() {
         if (currentTemperature.isNotEmpty() && currentWeatherCondition.isNotEmpty()) {
             Toast.makeText(
-                this,
+                requireContext(),
                 "Current weather: $currentWeatherCondition, Temperature: $currentTemperature, " +
                         "Humidity: $currentHumidity, Wind: $currentWindSpeed",
                 Toast.LENGTH_LONG
             ).show()
         } else {
-            Toast.makeText(
-                this,
-                "Weather data not available yet",
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(requireContext(), "Weather data not available yet", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // to stop location on pause
     override fun onPause() {
         super.onPause()
         if (isTracking) {
@@ -385,29 +360,11 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    // resume
-    override fun onResume() {
-        super.onResume()
-        if (isTracking) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                fusedLocationClient.requestLocationUpdates(
-                    locationRequest,
-                    locationCallback,
-                    Looper.getMainLooper()
-                )
-            }
-        }
-    }
-
-    // clean up for good practice - weather, maps  
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
         fusedLocationClient.removeLocationUpdates(locationCallback)
         handler.removeCallbacks(timerRunnable)
         weatherScope.cancel()
+        _binding = null
     }
 }

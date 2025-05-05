@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_other_activities"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Others" />
+
+    <item
+        android:id="@+id/nav_my_activities"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:title="My Activities" />
+
+    <item
+        android:id="@+id/nav_tracking"
+        android:icon="@android:drawable/ic_media_play"
+        android:title="Tracking" />
+</menu>

@@ -57,5 +57,11 @@
             android:theme="@style/Theme.Stride">
         </activity>
 
+        <activity
+            android:name="es.uc3m.android.stride.ui.HomeActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Stride">
+        </activity>
+
     </application>
 </manifest>
