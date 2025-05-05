@@ -4,64 +4,64 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 import es.uc3m.android.stride.R
 import es.uc3m.android.stride.databinding.ActivityLoginBinding
-import es.uc3m.android.stride.ui.TrackingActivity
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        auth = FirebaseAuth.getInstance()
         setupClickListeners()
     }
 
-    // registration activity
     private fun setupClickListeners() {
         binding.tvRegisterLink.setOnClickListener {
-            val intent = Intent(this, RegistrationActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, RegistrationActivity::class.java))
             finish()
         }
 
-        // login button
         binding.btnLogin.setOnClickListener {
             if (validateForm()) {
                 loginUser()
             }
         }
 
-        // forgot password
         binding.tvForgotPassword.setOnClickListener {
-            // TODO: Implement forgot password functionality
-            Toast.makeText(
-                this,
-                getString(R.string.forgot_password_coming_soon),
-                Toast.LENGTH_SHORT
-            ).show()
+            val email = binding.etEmail.text.toString().trim()
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Enter your email to reset password.", Toast.LENGTH_SHORT).show()
+            } else {
+                auth.sendPasswordResetEmail(email).addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Toast.makeText(this, "Password reset email sent.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Error: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
         }
     }
 
-
-    // email and password validation
     private fun validateForm(): Boolean {
         var isValid = true
 
         val email = binding.etEmail.text.toString().trim()
+        val password = binding.etPassword.text.toString()
+
         if (email.isEmpty()) {
             binding.tilEmail.error = getString(R.string.error_email_required)
-            isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.tilEmail.error = getString(R.string.error_invalid_email)
             isValid = false
         } else {
             binding.tilEmail.error = null
         }
 
-        val password = binding.etPassword.text.toString()
         if (password.isEmpty()) {
             binding.tilPassword.error = getString(R.string.error_password_required)
             isValid = false
@@ -72,26 +72,19 @@ class LoginActivity : AppCompatActivity() {
         return isValid
     }
 
-    // hardcoded login credentials yee
     private fun loginUser() {
-        val hardcodedEmail = "user@example.com"
-        val hardcodedPassword = "password"
+        val email = binding.etEmail.text.toString().trim()
+        val password = binding.etPassword.text.toString()
 
-        val enteredEmail = binding.etEmail.text.toString().trim()
-        val enteredPassword = binding.etPassword.text.toString()
-
-        if (enteredEmail == hardcodedEmail && enteredPassword == hardcodedPassword) {
-            Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()
-            val intent = Intent(this, TrackingActivity::class.java)
-            startActivity(intent)
-            finish()
-        } else {
-            Toast.makeText(this, "Invalid credentials!", Toast.LENGTH_SHORT).show()
-        }
-
-        // remember me button - doesn't work yet lol
-        if (binding.cbRememberMe.isChecked) {
-            // TODO: Store credentials securely or set a flag in SharedPreferences
-        }
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, TrackingActivity::class.java))
+                    finish()
+                } else {
+                    Toast.makeText(this, "Authentication failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
     }
 }

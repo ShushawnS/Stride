@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "803613212028",
+    "project_id": "uc3m-it-2025-16504-g07-97",
+    "storage_bucket": "uc3m-it-2025-16504-g07-97.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:803613212028:android:b40d90ba0e9f78d03878f9",
+        "android_client_info": {
+          "package_name": "es.uc3m.android.stride"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApIeR908EoFbXBWF6u7TyO6uTLgKPfihs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
