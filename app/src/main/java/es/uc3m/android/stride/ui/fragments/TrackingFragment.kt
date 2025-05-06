@@ -1,6 +1,11 @@
+// Add these dependencies in your app/build.gradle before using Firebase:
+// implementation 'com.google.firebase:firebase-auth'
+// implementation 'com.google.firebase:firebase-firestore'
+
 package es.uc3m.android.stride.ui.fragments
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
@@ -8,17 +13,18 @@ import android.os.*
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import es.uc3m.android.stride.R
 import es.uc3m.android.stride.databinding.FragmentTrackingBinding
 import kotlinx.coroutines.*
@@ -64,11 +70,7 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
         private const val WEATHER_UPDATE_INTERVAL = 10 * 60 * 1000L
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentTrackingBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -138,11 +140,7 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun enableMyLocation() {
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             mMap.isMyLocationEnabled = true
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 location?.let {
@@ -152,28 +150,15 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
                 }
             }
         } else {
-            requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE &&
-            grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-        ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             enableMyLocation()
         } else {
-            Toast.makeText(
-                requireContext(),
-                "Location permission denied. Cannot track workout.",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(requireContext(), "Location permission denied. Cannot track workout.", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -190,16 +175,8 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
         binding.btnStartTracking.text = getString(R.string.stop_tracking)
         binding.btnStartTracking.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.stop_color))
 
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.getMainLooper()
-            )
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
         }
 
         timeStarted = SystemClock.elapsedRealtime() - timeElapsed
@@ -214,7 +191,48 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
         fusedLocationClient.removeLocationUpdates(locationCallback)
         handler.removeCallbacks(timerRunnable)
 
-        showWorkoutSummary()
+        showSaveWorkoutDialog()
+    }
+
+    private fun showSaveWorkoutDialog() {
+        val builder = AlertDialog.Builder(requireContext())
+        val input = EditText(requireContext())
+        input.hint = "Enter activity title"
+        builder.setTitle("Save Workout")
+        builder.setView(input)
+
+        builder.setPositiveButton("Save") { _, _ ->
+            val title = input.text.toString()
+            saveWorkoutToFirestore(title)
+        }
+        builder.setNegativeButton("Cancel", null)
+        builder.show()
+    }
+
+    private fun saveWorkoutToFirestore(title: String) {
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        val workout = hashMapOf(
+            "email" to user.email,
+            "title" to title,
+            "timestamp" to FieldValue.serverTimestamp(),
+            "distanceKm" to distanceTraveled / 1000f,
+            "durationMs" to timeElapsed,
+            "calories" to (distanceTraveled / 1000f * 65).roundToInt()
+        )
+
+        db.collection("workouts")
+            .add(workout)
+            .addOnSuccessListener {
+                binding.btnStartTracking.text = getString(R.string.start_tracking)
+                binding.btnStartTracking.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.accent_color))
+                Toast.makeText(requireContext(), "✅ Workout saved successfully!", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Workout saved!", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "❌ Failed to save workout. Please try again.", Toast.LENGTH_LONG).show()
+            }
     }
 
     private fun updatePathOnMap() {
@@ -260,14 +278,6 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
         binding.tvTimeElapsed.text = formattedTime
     }
 
-    private fun showWorkoutSummary() {
-        Toast.makeText(
-            requireContext(),
-            "Workout completed! Distance: ${String.format("%.2f", distanceTraveled / 1000f)} km",
-            Toast.LENGTH_LONG
-        ).show()
-    }
-
     private fun fetchWeatherData(latitude: Double, longitude: Double) {
         weatherScope.launch {
             try {
@@ -279,11 +289,7 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
                 withContext(Dispatchers.Main) {
                     binding.tvTemperature.text = "--°C"
                     binding.tvWeatherCondition.text = "Weather unavailable"
-                    Toast.makeText(
-                        requireContext(),
-                        "Failed to fetch weather data: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(requireContext(), "Failed to fetch weather data: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -342,12 +348,7 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
 
     private fun showDetailedWeatherInfo() {
         if (currentTemperature.isNotEmpty() && currentWeatherCondition.isNotEmpty()) {
-            Toast.makeText(
-                requireContext(),
-                "Current weather: $currentWeatherCondition, Temperature: $currentTemperature, " +
-                        "Humidity: $currentHumidity, Wind: $currentWindSpeed",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(requireContext(), "Current weather: $currentWeatherCondition, Temperature: $currentTemperature, Humidity: $currentHumidity, Wind: $currentWindSpeed", Toast.LENGTH_LONG).show()
         } else {
             Toast.makeText(requireContext(), "Weather data not available yet", Toast.LENGTH_SHORT).show()
         }
