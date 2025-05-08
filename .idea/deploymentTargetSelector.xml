@@ -22,6 +22,9 @@
       <SelectionState runConfigName="TrackingFlowTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
+      <SelectionState runConfigName="testLoginAndTrackActivityAppearsInMyActivities()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
     </selectionStates>
   </component>
 </project>
