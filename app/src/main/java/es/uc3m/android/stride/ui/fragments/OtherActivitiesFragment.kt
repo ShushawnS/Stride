@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import es.uc3m.android.stride.R
 import es.uc3m.android.stride.ui.adapters.ActivityAdapter
+import es.uc3m.android.stride.ui.fragments.dialogs.WorkoutDetailDialogFragment
 import es.uc3m.android.stride.ui.models.ActivityItem
 import java.text.SimpleDateFormat
 import java.util.*
@@ -20,6 +21,7 @@ class OtherActivitiesFragment : Fragment() {
 
     private lateinit var listView: ListView
     private val activityItems = mutableListOf<ActivityItem>()
+    private val workoutDocuments = mutableListOf<Map<String, Any>>() // Needed for dialog
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -45,6 +47,7 @@ class OtherActivitiesFragment : Fragment() {
             .get()
             .addOnSuccessListener { result ->
                 activityItems.clear()
+                workoutDocuments.clear()
 
                 for (document in result) {
                     val data = document.data
@@ -66,17 +69,28 @@ class OtherActivitiesFragment : Fragment() {
                         calories = calories,
                         date = formattedDate,
                         weatherCondition = condition,
-                        userName = userName // ✅ Add to ActivityItem
+                        userName = userName
                     )
 
                     activityItems.add(item)
+                    workoutDocuments.add(data)
                 }
 
                 val adapter = ActivityAdapter(requireContext(), activityItems)
                 listView.adapter = adapter
+
+                listView.setOnItemClickListener { _, _, position, _ ->
+                    val workoutData = workoutDocuments[position]
+                    showWorkoutDetailDialog(workoutData)
+                }
             }
             .addOnFailureListener {
                 Toast.makeText(requireContext(), "Failed to fetch other workouts", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun showWorkoutDetailDialog(workoutData: Map<String, Any>) {
+        val dialog = WorkoutDetailDialogFragment.newInstance(workoutData)
+        dialog.show(parentFragmentManager, "WorkoutDetailDialog")
     }
 }
