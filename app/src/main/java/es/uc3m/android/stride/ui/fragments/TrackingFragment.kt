@@ -7,8 +7,8 @@ package es.uc3m.android.stride.ui.fragments
 import android.Manifest
 import android.app.AlertDialog
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.Location
+import android.media.MediaPlayer
 import android.os.*
 import android.view.LayoutInflater
 import android.view.View
@@ -63,6 +63,9 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
     private var currentHumidity = ""
     private var currentWindSpeed = ""
 
+    private var mediaPlayer: MediaPlayer? = null
+    private val musicUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
         private const val UPDATE_INTERVAL = 5000L
@@ -93,12 +96,30 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
             }
         }
 
-        binding.btnStartTracking.setOnClickListener {
-            toggleTracking()
+        binding.btnStartTracking.setOnClickListener { toggleTracking() }
+        binding.layoutWeatherInfo.setOnClickListener { showDetailedWeatherInfo() }
+
+        binding.btnPlayMusic.setOnClickListener {
+            if (mediaPlayer == null) {
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(musicUrl)
+                    setOnPreparedListener {
+                        start()
+                        Toast.makeText(requireContext(), "\uD83C\uDFB5 Music started", Toast.LENGTH_SHORT).show()
+                    }
+                    prepareAsync()
+                }
+            } else if (!mediaPlayer!!.isPlaying) {
+                mediaPlayer?.start()
+                Toast.makeText(requireContext(), "▶️ Playing", Toast.LENGTH_SHORT).show()
+            }
         }
 
-        binding.layoutWeatherInfo.setOnClickListener {
-            showDetailedWeatherInfo()
+        binding.btnPauseMusic.setOnClickListener {
+            if (mediaPlayer?.isPlaying == true) {
+                mediaPlayer?.pause()
+                Toast.makeText(requireContext(), "⏸️ Paused", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -250,7 +271,7 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
         if (pathPoints.size > 1) {
             mMap.clear()
             val polylineOptions = PolylineOptions()
-                .color(Color.BLUE)
+                .color(android.graphics.Color.BLUE)
                 .width(10f)
                 .addAll(pathPoints)
             mMap.addPolyline(polylineOptions)
@@ -377,6 +398,8 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
         fusedLocationClient.removeLocationUpdates(locationCallback)
         handler.removeCallbacks(timerRunnable)
         weatherScope.cancel()
+        mediaPlayer?.release()
+        mediaPlayer = null
         _binding = null
     }
 }

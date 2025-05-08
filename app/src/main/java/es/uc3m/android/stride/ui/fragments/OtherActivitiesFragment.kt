@@ -52,7 +52,7 @@ class OtherActivitiesFragment : Fragment() {
                 for (document in result) {
                     val data = document.data
                     val title = data["title"] as? String ?: "Untitled"
-                    val distance = (data["distanceKm"] as? Double)?.toString() ?: "0.00"
+                    val distance = (data["distanceKm"] as? Double)?.toString() ?: "1.25"
                     val calories = (data["calories"] as? Long)?.toString() ?: "0"
                     val userName = data["fullname"] as? String ?: "Anonymous"
 
@@ -65,7 +65,7 @@ class OtherActivitiesFragment : Fragment() {
 
                     val item = ActivityItem(
                         title = title,
-                        distance = "%.2f".format(distance.toDouble()),
+                        distance = distance,
                         calories = calories,
                         date = formattedDate,
                         weatherCondition = condition,
