@@ -1,3 +1,7 @@
+// Add these dependencies in your app/build.gradle before using Firebase:
+// implementation 'com.google.firebase:firebase-auth'
+// implementation 'com.google.firebase:firebase-firestore'
+
 package es.uc3m.android.stride.ui.fragments
 
 import android.Manifest
