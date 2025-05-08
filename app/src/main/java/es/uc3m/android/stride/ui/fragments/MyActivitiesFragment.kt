@@ -4,18 +4,24 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import es.uc3m.android.stride.R
+import es.uc3m.android.stride.ui.adapters.ActivityAdapter
+import es.uc3m.android.stride.ui.fragments.dialogs.WorkoutDetailDialogFragment
+import es.uc3m.android.stride.ui.models.ActivityItem
+import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MyActivitiesFragment : Fragment() {
 
     private lateinit var listView: ListView
-    private val activitiesList = mutableListOf<String>()
+    private val activityItems = mutableListOf<ActivityItem>()
+    private val workoutDocuments = mutableListOf<Map<String, Any>>() // Keep for dialog details
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -40,19 +46,52 @@ class MyActivitiesFragment : Fragment() {
             .orderBy("timestamp")
             .get()
             .addOnSuccessListener { result ->
-                activitiesList.clear()
+                activityItems.clear()
+                workoutDocuments.clear()
+
                 for (document in result) {
-                    val title = document.getString("title") ?: "Untitled"
-                    val distance = document.getDouble("distanceKm") ?: 0.0
-                    val calories = document.getLong("calories") ?: 0
-                    val summary = "$title - ${"%.2f".format(distance)} km - $calories kcal"
-                    activitiesList.add(summary)
+                    val data = document.data
+                    val title = data["title"] as? String ?: "Untitled"
+                    val distance = (data["distanceKm"] as? Double)?.toString() ?: "0.00"
+                    val calories = (data["calories"] as? Long)?.toString() ?: "0"
+                    val timestamp = (data["timestamp"] as? Timestamp)?.toDate()?.let {
+                        SimpleDateFormat("MMM d, yyyy • HH:mm", Locale.getDefault()).format(it)
+                    } ?: "Unknown date"
+                    val weather = data["weather"] as? Map<*, *>
+                    val condition = weather?.get("condition") as? String ?: "default"
+                    val userName = data["fullname"] as? String ?: "Anonymous"
+                    val formattedDate = (data["timestamp"] as? Timestamp)?.toDate()?.let {
+                        SimpleDateFormat("MMM d, yyyy • HH:mm", Locale.getDefault()).format(it)
+                    } ?: "Unknown date"
+
+                    val item = ActivityItem(
+                        title = title,
+                        distance = "%.2f".format(distance.toDouble()),
+                        calories = calories,
+                        date = formattedDate,
+                        weatherCondition = condition,
+                        userName = userName
+                    )
+
+                    activityItems.add(item)
+                    workoutDocuments.add(data)
                 }
-                val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, activitiesList)
+
+                val adapter = ActivityAdapter(requireContext(), activityItems)
                 listView.adapter = adapter
+
+                listView.setOnItemClickListener { _, _, position, _ ->
+                    val workoutData = workoutDocuments[position]
+                    showWorkoutDetailDialog(workoutData)
+                }
             }
             .addOnFailureListener {
                 Toast.makeText(requireContext(), "Failed to fetch workouts", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun showWorkoutDetailDialog(workoutData: Map<String, Any>) {
+        val dialog = WorkoutDetailDialogFragment.newInstance(workoutData)
+        dialog.show(parentFragmentManager, "WorkoutDetailDialog")
     }
 }

@@ -213,13 +213,25 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
         val user = FirebaseAuth.getInstance().currentUser ?: return
         val db = FirebaseFirestore.getInstance()
 
+        val route = pathPoints.map { point ->
+            mapOf("lat" to point.latitude, "lng" to point.longitude)
+        }
+
         val workout = hashMapOf(
             "email" to user.email,
+            "fullname" to user.displayName,
             "title" to title,
             "timestamp" to FieldValue.serverTimestamp(),
             "distanceKm" to distanceTraveled / 1000f,
             "durationMs" to timeElapsed,
-            "calories" to (distanceTraveled / 1000f * 65).roundToInt()
+            "calories" to (distanceTraveled / 1000f * 65).roundToInt(),
+            "path" to route,
+            "weather" to mapOf(
+                "temperature" to currentTemperature,
+                "condition" to currentWeatherCondition,
+                "humidity" to currentHumidity,
+                "windSpeed" to currentWindSpeed
+            )
         )
 
         db.collection("workouts")
@@ -227,11 +239,10 @@ class TrackingFragment : Fragment(), OnMapReadyCallback {
             .addOnSuccessListener {
                 binding.btnStartTracking.text = getString(R.string.start_tracking)
                 binding.btnStartTracking.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.accent_color))
-                Toast.makeText(requireContext(), "✅ Workout saved successfully!", Toast.LENGTH_LONG).show()
-                Toast.makeText(requireContext(), "Workout saved!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "\u2705 Workout saved with map & weather!", Toast.LENGTH_LONG).show()
             }
             .addOnFailureListener {
-                Toast.makeText(requireContext(), "❌ Failed to save workout. Please try again.", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "\u274C Failed to save workout.", Toast.LENGTH_LONG).show()
             }
     }
 

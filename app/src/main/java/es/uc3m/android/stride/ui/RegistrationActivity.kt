@@ -82,18 +82,33 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     private fun registerUser() {
+        val name = binding.etName.text.toString().trim()
         val email = binding.etEmail.text.toString().trim()
         val password = binding.etPassword.text.toString()
 
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, LoginActivity::class.java))
-                    finish()
+                    val user = auth.currentUser
+
+                    // ✅ Set the display name in FirebaseAuth
+                    val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                        .setDisplayName(name)
+                        .build()
+
+                    user?.updateProfile(profileUpdates)?.addOnCompleteListener { updateTask ->
+                        if (updateTask.isSuccessful) {
+                            Toast.makeText(this, "Registration complete!", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this, LoginActivity::class.java))
+                            finish()
+                        } else {
+                            Toast.makeText(this, "Failed to set display name.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 } else {
                     Toast.makeText(this, "Registration failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }
     }
+
 }
