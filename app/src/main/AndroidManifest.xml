@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -7,6 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- Added for notifications on Android 13+ -->
 
     <application
         android:allowBackup="true"
@@ -19,7 +19,7 @@
         android:theme="@style/Theme.Stride"
         tools:targetApi="31">
 
-        <!-- Weather -->
+        <!-- Weather API Key -->
         <meta-data
             android:name="weather_api_key"
             android:value="805d869ddfc58f73f6c6c20a73d249ce" />
@@ -29,6 +29,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAz_PZLPtnLPvwOmsRrQJAJfBcbk2n-55s" />
 
+        <!-- Activities -->
         <activity
             android:name="es.uc3m.android.stride.ui.LandingActivity"
             android:exported="true"
@@ -52,16 +53,12 @@
         </activity>
 
         <activity
-            android:name="es.uc3m.android.stride.ui.TrackingActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Stride">
-        </activity>
-
-        <activity
             android:name="es.uc3m.android.stride.ui.HomeActivity"
             android:exported="true"
             android:theme="@style/Theme.Stride">
         </activity>
 
+        <!-- Register NotificationReceiver -->
+        <receiver android:name=".notifications.NotificationReceiver" android:exported="true"/>
     </application>
 </manifest>
